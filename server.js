@@ -1,12 +1,13 @@
 const express = require('express');
 const app = express();
 const bcrypt = require('bcrypt-nodejs');
+const cors = require('cors');
 
 // Database
 const database = {
     users: [
         {
-            id: "123",
+            id: '123',
             name: "John",
             email: "john@gmail.com",
             password: "123",
@@ -25,18 +26,25 @@ const database = {
     logins: [
         {
             id: '123',
-            password: "hashed password",
+            password: "123",
         },
         {
             id: '124',
-            password: "hashed password",
+            password: "1234",
         },
     ]
 };
 
+database.logins.forEach(login => {
+    bcrypt.hash(login.password, null, null, (err, data) => {
+        login.password = data;
+    })
+})
+
 // Setting Middleware
 app.use(express.urlencoded({extended: false}));
 app.use(express.json());
+app.use(cors());
 
 // Routes
 /*
@@ -53,9 +61,17 @@ app.get('/', (req, res) => {
 app.post('/signin', (req, res) => {
     let {email, password} = req.body;
     let id = database.users[0].id;
-    if(id === database.logins[0].id && bcrypt.compare(password, database.logins[0].password, (err, resp)=>resp)) {
-        res.status(200).json({
-            message: "success"
+    if(id === database.logins[0].id) {
+        bcrypt.compare(password, database.logins[0].password, (err, resp) => {
+            if(resp) {
+                res.status(200).json({
+                    message: "success"
+                });
+            } else {
+                res.status(404).json({
+                    error: "incorrect credentials"
+                });
+            }
         });
     } else {
         res.status(404).json({
