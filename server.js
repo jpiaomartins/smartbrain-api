@@ -10,7 +10,6 @@ const database = {
             id: '123',
             name: "John",
             email: "john@gmail.com",
-            password: "123",
             entries:  0,
             joined: new Date(),
         },
@@ -18,7 +17,6 @@ const database = {
             id: "124",
             name: "Ann",
             email: "ann@gmail.com",
-            password: "1234",
             entries:  0,
             joined: new Date(),
         },
@@ -34,12 +32,6 @@ const database = {
         },
     ]
 };
-
-database.logins.forEach(login => {
-    bcrypt.hash(login.password, null, null, (err, data) => {
-        login.password = data;
-    })
-})
 
 // Setting Middleware
 app.use(express.urlencoded({extended: false}));
@@ -61,12 +53,18 @@ app.get('/', (req, res) => {
 app.post('/signin', (req, res) => {
     let {email, password} = req.body;
     let id = database.users[0].id;
+    let tempPassword = '$2a$10$mMTEbL9lgSiseVvkgechpO9MMK8gsdttL6m5iglSQXl.2dr0Wu/xi';
     if(id === database.logins[0].id) {
-        bcrypt.compare(password, database.logins[0].password, (err, resp) => {
+        bcrypt.compare(password, tempPassword, (err, resp) => {
             if(resp) {
-                res.status(200).json({
-                    message: "success"
+                let userData = {};
+                database.users.some(user =>  {
+                    if(user.email === email) {
+                        userData = user;
+                        return true;
+                    }
                 });
+                res.status(200).json(userData);
             } else {
                 res.status(404).json({
                     error: "incorrect credentials"
